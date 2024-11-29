@@ -1,27 +1,23 @@
 const express = require('express')
-const { Authentication, AdminAuthorisation, ManagerAuthorisation, Authorisation } = require('../middleware/auth')
-const { createUser, getUserById, getAllUsers, updateUser, updateUserRole } = require('../controller/employeeController')
+const { Authentication, AdminAuthorisation} = require('../middleware/auth')
+const { createUser, getUserById, getAllUsers, updateUser, updateUserRole, deleteUser } = require('../controller/employeeController')
 
 // const {login,register,logout} = require('../controller/auth')
 
 const router = express.Router()
 
-//creating employee - admin
-router.post("/create_user", Authentication, AdminAuthorisation, createUser)
-
-//get employee by id --> for all
-router.get("/get_user/:id",Authentication, AdminAuthorisation, ManagerAuthorisation, Authorisation, getUserById)
-
 //get all employee --> admin and manager
-router.get("/get_all_user", Authentication, AdminAuthorisation, ManagerAuthorisation, getAllUsers)
+router.get("/get_all_user", Authentication, (req, res, next) => AdminAuthorisation(req, res, next, ['Admin', 'Manager']), getAllUsers)
+
+router.get("/get_user/:id", Authentication, (req, res, next) => AdminAuthorisation(req, res, next, ['Admin', 'Manager']), getUserById)
 
 //update employee details only name and password-- all
-router.get("/update", Authentication, Authorisation, updateUser)
+router.put("/update", Authentication, updateUser)
 
 //update role - admin
-router.get("/update/:id", Authentication, AdminAuthorisation, updateUserRole)
+router.put("/update", Authentication, (req, res, next) => AdminAuthorisation(req, res, next, ['Admin']), updateUserRole)
 
-//delete employee -- admin / manager
-
+//delete employee -- admin
+router.put("/deleteUser", Authentication, (req, res, next) => AdminAuthorisation(req, res, next, ['Admin']), deleteUser)
 
 module.exports = router

@@ -23,74 +23,79 @@ const Authentication = async function(req, res, next){
     }
 }
 
-const AdminAuthorisation = async function(req,res,next){
-    try{
-        
-        // let {userId} = req.body
-        let userLoggedin = req.decodedToken
-        
-        const userData = await User.findById(userLoggedin)
+const AdminAuthorisation = async function (req, res, next, roles = []) {
+  try {
+    const userLoggedin = req.decodedToken;
 
-        // const userToBeModified = userData._id.toString()
+    // Fetch user data
+    const userData = await User.findById(userLoggedin);
+    if (!userData) {
+      return res.status(404).json("User not found");
+    }
+
+    // Role-based authorization
+    if (roles.length > 0) {
+      if (roles.includes(userData.role) || userLoggedin === req.params.id) {
+        return next(); 
+      } 
+    }
+
+    if (userLoggedin === req.params.id) {
+      return next(); 
+    }
+
+
+    return res.status(403).json("Not authorised!");
+
+  } catch (error) {
+    return res.status(500).json(error.message); // Internal server error
+  }
+};
+
+// const ManagerAuthorisation = async function(req,res,next){
+//     try{
+        
+//         let userLoggedin = req.decodedToken
+        
+//         const userData = await User.findById(userLoggedin)
+
+//         // const userToBeModified = userData._id.toString()
             
-        if(userData.role !== "Admin"){
-            return res.status(403).json("Not authorised!")
-        }
-        // if(userToBeModified!==userLoggedin && userToBeModified.role !== "Admin"){
-        //     return res.status(403).json("Not authorised!")
-        // }
+//         if(userData.role !== "Manager"){
+//             return res.status(403).json("Not authorised!")
+//         }
         
-        next()
+//         next()
 
-    }
-    catch(error){
-        return res.status(500).json(error.message)
-    }
+//     }
+//     catch(error){
+//         return res.status(500).json(error.message)
+//     }
 
-}
-const ManagerAuthorisation = async function(req,res,next){
-    try{
+// }
+
+// const Authorisation = async function(req,res,next){
+//     try{
         
-        let userLoggedin = req.decodedToken
+//         let {userId} = req.body
+//         let userLoggedin = req.decodedToken
         
-        const userData = await User.findById(userLoggedin)
+//         const userData = await User.findById(userId)
 
-        // const userToBeModified = userData._id.toString()
+//         const userToBeModified = userData._id.toString()
             
-        if(userData.role !== "Manager"){
-            return res.status(403).json("Not authorised!")
-        }
+//         if(userToBeModified!==userLoggedin){
+//             return res.status(403).json("Not authorised!")
+//         }
         
-        next()
+//         next()
 
-    }
-    catch(error){
-        return res.status(500).json(error.message)
-    }
+//     }
+//     catch(error){
+//         return res.status(500).json(error.message)
+//     }
 
-}
+// }
 
-const Authorisation = async function(req,res,next){
-    try{
-        
-        let {userId} = req.body
-        let userLoggedin = req.decodedToken
-        
-        const userData = await User.findById(userId)
-
-        const userToBeModified = userData._id.toString()
-            
-        if(userToBeModified!==userLoggedin){
-            return res.status(403).json("Not authorised!")
-        }
-        
-        next()
-
-    }
-    catch(error){
-        return res.status(500).json(error.message)
-    }
-
-}
-
-module.exports = { Authentication, AdminAuthorisation, ManagerAuthorisation, Authorisation}
+module.exports = { Authentication, AdminAuthorisation}
+// module.exports = { Authentication, AdminAuthorisation, ManagerAuthorisation, Authorisation}

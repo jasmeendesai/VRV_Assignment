@@ -7,11 +7,34 @@ const {SECRET_KEY} = process.env
 
 const register = async(req, res)=>{
     try {
-        const {email, password, name} = req.body
+        const {email, password, name, role} = req.body
 
         // CHECK USER IF ALREADY EXIST
-        const existedUser =  await User.findOne({email : email});
-        if(existedUser) return res.status(400).send("User already exist")
+        // const existedUser =  await User.findOne({email : email, name: name});
+        // if(existedUser) return res.status(400).send(`User already exist as ${existedUser.role}`)
+
+        const existingUser = await User.findOne({
+            $or: [{ email }, { name }],
+          });
+      
+          if (existingUser) {
+            if (existingUser.email === email) {
+              return res.status(400).send(`Email is already registered as ${existingUser.role}`);
+            }
+            if (existingUser.name === name) {
+              return res.status(400).send(`Name is already in use by a ${existingUser.role}`);
+            }
+          }
+
+            const roleEnum = ['Admin', 'Manager', 'Employee']
+
+            if(role){
+                if(!roleEnum.includes(role)){
+                    return res.status(400).send("Please Enter proper role")
+                }
+            } else {
+                return res.status(400).send("Please select role")
+            }
 
         // CREATE NEW USER
             // HASH PASSWORD
@@ -22,13 +45,9 @@ const register = async(req, res)=>{
                 email : email,
                 password : hashPassword,
                 name : name,
-                role : "Admin",
+                role : role,
             })
 
-            // jwt 
-            // const token = jwt.sign({ userId: user._id, exp: 7560606060 }, SECRET_KEY)
-
-            // return res.status(201).json({user, token})
             return res.status(200).send("User is registered!")  
     } catch (error) {
         return res.status(500).send(error)
@@ -43,7 +62,7 @@ const login = async(req, res)=>{
         // const {email, password} = req.body
 
         // CHECK USER IF ALREADY EXIST
-        const user =  await User.findOne({username : req.body.email});
+        const user =  await User.findOne({email : req.body.email});
         if(!user) return res.status(404).send("User not found");
 
         // CHECK PASSWORD CORRECT
